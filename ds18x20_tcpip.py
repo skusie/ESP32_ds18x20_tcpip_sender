@@ -39,12 +39,19 @@ def connect_server_and_send_data(command):
 	print(s.recv(1))
 	s.close()
 
-def get_temperature_data():
+def init_ds18x20_sensors():
 	ow = onewire.OneWire(Pin(CONSTANTS['ds18x20_pin_number']))
 	ds = ds18x20.DS18X20(ow)
 	roms = ds.scan()
+	return ds, roms
+
+
+def get_temperature_data(ds, roms):
+	print('converting...')
 	ds.convert_temp()
+	print('sleeping...')
 	time.sleep_ms(750)
+	print('reading...')
 	temp_data = ''
 	first_iteration = True
 	try:
@@ -73,18 +80,19 @@ def zfill_special(string, width):
 
 	return (string0 + '.' + string1)
 
-
-connect_wlan()
-rtc = RTC()
-print(rtc.datetime())
-ntptime.host=CONSTANTS['ntphost']
-ntptime.settime()
-while True:
-	temps = get_temperature_data()
-	print(temps)
-	message = str(rtc.datetime()) + ':' + temps
-	message_length = len(message)
-	header  = 'data:' + str((5 + len(message) + len(str(message_length))))	
-	print(header+message)
-	connect_server_and_send_data(header + message)
-	time.sleep_ms(1000)
+def main_loop():
+	connect_wlan()
+	rtc = RTC()
+	print(rtc.datetime())
+	ntptime.host=CONSTANTS['ntphost']
+	ntptime.settime()
+	ds, roms = init_ds18x20_sensors()	
+	while True:
+		temps = get_temperature_data(ds, roms)
+		message = str(rtc.datetime()) + ':' + temps
+		message_length = len(message)
+		header  = 'data:' + str((5 + len(message) + len(str(message_length))))	
+		connect_server_and_send_data(header + message)
+		print(temps)
+		print(header + message)
+		#time.sleep_ms(1000)
