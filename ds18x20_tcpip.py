@@ -3,11 +3,11 @@ import ntptime
 from machine import Pin, RTC
 
 
-CONSTANTS = {	'ds18x20_pin_number' :  15,
-		'server_ip_address'  : '192.168.145.11',	
-		'creds_file_name'    : 'creds.txt',
-		'ntphost'            : 'fritz.box'
-	     }
+CONFIGURATION = {'ds18x20_pin_number' :  15,
+		 'server_ip_address'  : '192.168.145.11',	
+		 'creds_file_name'    : 'creds.txt',
+		 'ntphost'            : 'fritz.box'
+	        }
 		
 
 def read_wlan_file(filename):
@@ -19,8 +19,8 @@ def read_wlan_file(filename):
 	return ssid, pw
 
 def connect_wlan():
-	global CONSTANTS
-	ssid, pw = read_wlan_file(CONSTANTS['creds_file_name'])
+	global CONFIGURATION
+	ssid, pw = read_wlan_file(CONFIGURATION['creds_file_name'])
 	wlan = network.WLAN(network.STA_IF)
 	wlan.active(True)
 	if not wlan.isconnected():
@@ -32,15 +32,19 @@ def connect_wlan():
 	print('network config:', wlan.ifconfig())
 
 def connect_server_and_send_data(command):
-	global CONSTANTS
+	global CONFIGURATION
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.connect((CONSTANTS['server_ip_address'], 5007))
-	s.send(command.encode())
-	print(s.recv(1))
-	s.close()
+	try:
+		s.connect((CONFIGURATION['server_ip_address'], 5007))
+		s.send(command.encode())
+	except OSError as exc:
+		s.close()
+		if exc.errno == errno.ECONNRESET:	
+			print('Server not reachable')
+	#print(s.recv(1))
 
 def init_ds18x20_sensors():
-	ow = onewire.OneWire(Pin(CONSTANTS['ds18x20_pin_number']))
+	ow = onewire.OneWire(Pin(CONFIGURATION['ds18x20_pin_number']))
 	ds = ds18x20.DS18X20(ow)
 	roms = ds.scan()
 	return ds, roms
@@ -84,7 +88,7 @@ def main_loop():
 	connect_wlan()
 	rtc = RTC()
 	print(rtc.datetime())
-	ntptime.host=CONSTANTS['ntphost']
+	ntptime.host=CONFIGURATION['ntphost']
 	ntptime.settime()
 	ds, roms = init_ds18x20_sensors()	
 	while True:
@@ -92,6 +96,7 @@ def main_loop():
 		message = str(rtc.datetime()) + ':' + temps
 		message_length = len(message)
 		header  = 'data:' + str((5 + len(message) + len(str(message_length))))	
+		#todo hier kommentar mit Beispiel message
 		connect_server_and_send_data(header + message)
 		print(temps)
 		print(header + message)
