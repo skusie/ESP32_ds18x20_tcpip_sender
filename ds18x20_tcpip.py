@@ -37,6 +37,7 @@ def connect_server_and_send_data(command):
 	try:
 		s.connect((CONFIGURATION['server_ip_address'], 5007))
 		s.send(command.encode())
+		s.close()
 	except OSError as exc:
 		s.close()
 		if exc.errno == errno.ECONNRESET:	
