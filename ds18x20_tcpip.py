@@ -1,5 +1,6 @@
 import network, socket, onewire, time, ds18x20
 import ntptime
+import ujson
 from machine import Pin, RTC
 
 
@@ -63,15 +64,13 @@ def get_temperature_data(ds, roms):
 	print('sleeping...')
 	time.sleep_ms(750)
 	print('reading...')
-	temp_data = ''
-	first_iteration = True
+	temp_data = {}
 	try:
 		for rom in roms:
-			if first_iteration:
-				first_iteration = False
-				temp_data += zfill_special(str(ds.read_temp(rom)), 4)
-			else:
-				temp_data += ',' + zfill_special(str(ds.read_temp(rom)), 4)
+			rom_serial = '0x'
+			for byte in rom:
+				rom_serial += hex(byte)[2:4]
+			temp_data[rom_serial] = zfill_special(str(ds.read_temp(rom)), 4)
 	except:
 		#TODO
 		pass
@@ -101,7 +100,7 @@ def main_loop():
 	ds, roms = init_ds18x20_sensors()	
 	while True:
 		temps = get_temperature_data(ds, roms)
-		message = str(rtc.datetime()) + ':' + temps
+		message = str(rtc.datetime()) + ':' + ujson.dumps(temps)
 		message_length = len(message)
 		header  = 'data:' + str((5 + len(message) + len(str(message_length))))	
 		#todo hier kommentar mit Beispiel message
