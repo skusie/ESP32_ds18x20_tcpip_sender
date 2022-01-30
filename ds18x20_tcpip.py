@@ -70,7 +70,7 @@ def get_temperature_data(ds, roms):
 			rom_serial = '0x'
 			for byte in rom:
 				rom_serial += hex(byte)[2:4]
-			temp_data[rom_serial] = zfill_special(str(ds.read_temp(rom)), 4)
+			temp_data[rom_serial] = ds.read_temp(rom)
 	except:
 		#TODO
 		pass
@@ -78,7 +78,7 @@ def get_temperature_data(ds, roms):
 	return(temp_data)
 
 
-def zfill_special(string, width):
+def zfill_special(string, width): # deprecated
 	string  = string.split('.')
 	string0 = string[0]
 	string1 = string[1]
@@ -100,7 +100,7 @@ def main_loop():
 	ds, roms = init_ds18x20_sensors()	
 	while True:
 		temps = get_temperature_data(ds, roms)
-		message = str(rtc.datetime()) + ':' + ujson.dumps(temps)
+		message = str(rtc.datetime()) + ';' + ujson.dumps(temps)
 		message_length = len(message)
 		header  = 'data:' + str((5 + len(message) + len(str(message_length))))	
 		#todo hier kommentar mit Beispiel message
