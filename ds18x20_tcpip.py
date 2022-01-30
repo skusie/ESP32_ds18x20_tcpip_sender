@@ -44,6 +44,12 @@ def connect_server_and_send_data(command):
 			print('Server not reachable')
 	#print(s.recv(1))
 
+def read_esp32_raw_temp():
+	# degree Celsius
+	return (esp32.raw_temperature()-32)*5/9
+
+
+
 def init_ds18x20_sensors():
 	ow = onewire.OneWire(Pin(CONFIGURATION['ds18x20_pin_number']))
 	ds = ds18x20.DS18X20(ow)
@@ -67,7 +73,8 @@ def get_temperature_data(ds, roms):
 			else:
 				temp_data += ',' + zfill_special(str(ds.read_temp(rom)), 4)
 	except:
-		temp_data = get_temperature_data()
+		#TODO
+		pass
 
 	return(temp_data)
 
