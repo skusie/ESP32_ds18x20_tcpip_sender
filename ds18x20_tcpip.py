@@ -1,11 +1,12 @@
 import network, socket, onewire, time, ds18x20
 import ntptime
 import ujson
+import esp32
 from machine import Pin, RTC
 
 
 CONFIGURATION = {'ds18x20_pin_number' :  15,
-		 'server_ip_address'  : '192.168.145.11',	
+		 'server_ip_address'  : '192.168.145.23',
 		 'creds_file_name'    : 'creds.txt',
 		 'ntphost'            : 'fritz.box'
 	        }
